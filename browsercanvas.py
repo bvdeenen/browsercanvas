@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # vim:tw=0
 
-import string,cgi,time, mimetypes, json , threading, Queue
+
+import sys,string,cgi,time, mimetypes, json , threading, Queue
 from os import curdir, sep
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from SocketServer import ThreadingMixIn
@@ -10,11 +11,13 @@ from SocketServer import ThreadingMixIn
 queue=Queue.Queue(0)
 
 class MyHandler(BaseHTTPRequestHandler):
-	global queue
 
+	def log_request(self, code='-', size='-'):
+		pass
 	def do_GET(self):
 		try:
 			if self.path.endswith(".dyn"):   #our dynamic content
+				global queue
 				message=queue.get()
 				self.send_response(200)
 				self.send_header('Content-type',	'text/html')
@@ -36,21 +39,6 @@ class MyHandler(BaseHTTPRequestHandler):
 		except IOError:
 			self.send_error(404,'File Not Found: %s' % self.path)
 	 
-
-	def do_POST(self):
-		global rootnode
-		try:
-			ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
-			if ctype == 'multipart/form-data':
-				query=cgi.parse_multipart(self.rfile, pdict)
-			self.send_response(301)
-			
-			self.end_headers()
-			upfilecontent = query.get('upfile')
-			print "filecontent", upfilecontent[0]
-			self.wfile.write("<HTML>POST OK.<BR><BR>");
-			self.wfile.write(upfilecontent[0]);
-			
 		except :
 			pass
 
@@ -61,11 +49,16 @@ def dataproducer():
 	global queue
 	i=1
 	while True:
-		print "hoi"
-		message={"messages": [  "$('div1').innerHTML='update %d'" % (i,)]}
+		
+		# for example:
+		# $('div1').innerHTML='pietje'
+		m=sys.stdin.readline().strip()
+
+		message={"messages": [ m ]}
 		i+=1
 		queue.put(message)
 		time.sleep (1)
+	
 
 def main():
 	try:

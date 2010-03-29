@@ -6,7 +6,6 @@ if (navigator.appVersion.indexOf("Linux")!=-1) OSName="Linux";
 
 function browsercanvas() 
 {
-	console.log(OSName);
 	checkIfNeedsUpdate();
 
 }
@@ -21,7 +20,9 @@ function handle_update_messages(messages)
 		var message=messages[i];
 		console.log(message);
 		try {
-			eval(message);
+			if ( typeof message == "string" ) {
+				eval(message);
+			}
 		}
 		catch(e) {
 			console.log(e);
