@@ -1,21 +1,24 @@
 #!/usr/bin/python
 # vim:tw=0
 
-import string,cgi,time, mimetypes, json , threading
+import string,cgi,time, mimetypes, json , threading, Queue
 from os import curdir, sep
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from SocketServer import ThreadingMixIn
 #import pri
 
+queue=Queue.Queue(0)
+
 class MyHandler(BaseHTTPRequestHandler):
+	global queue
 
 	def do_GET(self):
 		try:
 			if self.path.endswith(".dyn"):   #our dynamic content
+				message=queue.get()
 				self.send_response(200)
 				self.send_header('Content-type',	'text/html')
 				self.end_headers()
-				message={"messages": [  "$('div1').innerHTML='live'"]}
 				self.wfile.write(json.dumps(message))
 				return
 
@@ -54,16 +57,24 @@ class MyHandler(BaseHTTPRequestHandler):
 class MultiThreadedHttpServer(ThreadingMixIn, HTTPServer):
 	pass
 
+def dataproducer():
+	global queue
+	i=1
+	while True:
+		print "hoi"
+		message={"messages": [  "$('div1').innerHTML='update %d'" % (i,)]}
+		i+=1
+		queue.put(message)
+		time.sleep (1)
+
 def main():
 	try:
 		server = MultiThreadedHttpServer(('', 8000), MyHandler)
 		server_thread=threading.Thread(target=server.serve_forever)
 		server_thread.setDaemon(True)
 		server_thread.start()
+		dataproducer() # endless loop
 		
-		while True:
-			print "hoi"
-			time.sleep (1)
 
 	except KeyboardInterrupt:
 		print '^C received, shutting down server'
