@@ -15,6 +15,7 @@ function browsercanvas()
 
 function handle_update_messages(messages) 
 {
+	reply=new Array();
 
 	for(var i=0;i<messages.length; i++) {
 		var message=messages[i];
@@ -25,9 +26,10 @@ function handle_update_messages(messages)
 			}
 		}
 		catch(e) {
-			console.log(e);
+			reply.push(e);
 		}
 	}
+	return reply;
 }
 
 
@@ -41,10 +43,11 @@ function go_to_new_location()
 	window.location = g_new_location;
 }
 
-function checkIfNeedsUpdate() 
+function checkIfNeedsUpdate(reply) 
 {
 	new Ajax.Request('/needsupdate.dyn', {
-		method:'get',
+		method:'post',
+		parameters: "reply="+Object.toJSON(reply),
 		onSuccess: function(transport){
             if (transport.status == 0) {
                 console.info('Server shutdown...');
@@ -54,8 +57,7 @@ function checkIfNeedsUpdate()
 			var response = transport.responseText.evalJSON();
 			}
 			catch (e) {
-				console.warn("illegal json", e);
-				checkIfNeedsUpdate();
+				checkIfNeedsUpdate(e);
 				return;
 
 			}
@@ -69,10 +71,8 @@ function checkIfNeedsUpdate()
 				//window.location=response.new_url;
 				return;
 			}
-			handle_update_messages( response.messages);
-
-
-			checkIfNeedsUpdate();
+			var reply = handle_update_messages( response.messages);
+			checkIfNeedsUpdate(reply);
 		},
 		onFailure: function(){ 
 			console.error('Something went wrong...');
