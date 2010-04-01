@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python 
 # vim:tw=0
 
 
@@ -17,15 +17,28 @@ class MyHandler(BaseHTTPRequestHandler):
 	def do_POST(self):
 		try:
 			if self.path.endswith(".dyn"):   #our dynamic content
-				clen = self.headers.getheader('content-length')
-				if clen:
-					clen = int(clen)
-				else:
-					print 'POST ERROR: missing content-length'
-					return
+				try:
+					clen = self.headers.getheader('content-length')
+					if clen:
+						clen = int(clen)
+					else:
+						print 'POST ERROR: missing content-length'
+						return
 
-				d=self.rfile.read(clen)
-				print d
+					reply=self.rfile.read(clen)
+					# reply=.. url encoded json ..
+					# todo cleanup with cgi module
+					a=reply.index('=')
+					b=reply.index('&')
+					reply = urlparse.unquote(reply[1+a:b])
+					reply=json.loads(reply)
+
+					# todo handle reply
+					if reply:
+						print reply
+
+				except:
+					print "Error: ", sys.exc_info()
 
 
 				global queue
@@ -73,9 +86,7 @@ def dataproducer():
 		m=sys.stdin.readline().strip()
 
 		message={"messages": [ m ]}
-		i+=1
 		queue.put(message)
-		time.sleep (1)
 	
 class BrowserThread(threading.Thread):	
 	def __init__(self):
@@ -90,6 +101,11 @@ class BrowserThread(threading.Thread):
 	
 
 def main():
+	# google chrome working directory
+	try:
+		os.mkdir('googlechrome')
+	except:
+		pass
 	try:
 		server = MultiThreadedHttpServer(('', 8000), MyHandler)
 		server_thread=threading.Thread(target=server.serve_forever)

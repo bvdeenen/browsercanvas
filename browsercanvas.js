@@ -45,6 +45,7 @@ function go_to_new_location()
 
 function checkIfNeedsUpdate(reply) 
 {
+	if ( reply==undefined) reply=null
 	new Ajax.Request('/needsupdate.dyn', {
 		method:'post',
 		parameters: "reply="+Object.toJSON(reply),
