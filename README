@@ -2,8 +2,8 @@ A PoC Python server process that lets a browser engage in a long poll
 process. This makes it possible to remote control the browser  by sending
 it Javascript commands.
 
-Start browsercanvas.py then point a browser to 
-
+Make sure you have google-chrome installed on your path somewhere, because
+browsercanvas.py starts this browser as a slave process at 
     http://localhost:8000/testpage.html
 
 then switch back to the window running the Python service and enter 
